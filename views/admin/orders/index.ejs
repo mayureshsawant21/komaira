@@ -1,0 +1,47 @@
+<%- include('../partials/top') %>
+<div class="page-head">
+  <div><h1>Orders</h1><p class="muted"><%= pager.total %> order<%= pager.total === 1 ? '' : 's' %></p></div>
+  <div class="actions"><a href="/admin/orders/export.csv<%= h.queryWith(query, { page: '' }) %>" class="btn">Export CSV</a></div>
+</div>
+
+<div class="tabs">
+  <a href="/admin/orders" class="<%= !query.status ? 'is-active' : '' %>">All</a>
+  <% statuses.forEach((s) => { %>
+    <a href="/admin/orders?status=<%= s %>" class="<%= query.status === s ? 'is-active' : '' %>"><%= s.charAt(0).toUpperCase() + s.slice(1) %> <em><%= statusCounts[s] || 0 %></em></a>
+  <% }) %>
+</div>
+
+<form class="filters" method="get">
+  <% if (query.status) { %><input type="hidden" name="status" value="<%= query.status %>"><% } %>
+  <input type="search" name="q" placeholder="Order #, name, email or phone" value="<%= query.q || '' %>">
+  <select name="payment">
+    <option value="">Any payment</option>
+    <% paymentStatuses.forEach((s) => { %><option value="<%= s %>" <%= query.payment === s ? 'selected' : '' %>><%= s %></option><% }) %>
+  </select>
+  <label class="inline-label">From <input type="date" name="from" value="<%= query.from || '' %>"></label>
+  <label class="inline-label">To <input type="date" name="to" value="<%= query.to || '' %>"></label>
+  <button class="btn" type="submit">Filter</button>
+</form>
+
+<% if (!orders.length) { %>
+  <div class="card empty"><h2>No orders found</h2><p>Orders appear here as soon as customers check out.</p></div>
+<% } else { %>
+<div class="card flush"><div class="table-wrap"><table class="table">
+  <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+  <tbody>
+    <% orders.forEach((o) => { %>
+      <tr class="row-link">
+        <td><a href="/admin/orders/<%= o.id %>"><strong><%= o.order_number %></strong></a></td>
+        <td><%= h.formatDate(o.created_at, true) %></td>
+        <td><%= o.name %><br><small class="muted"><%= o.city %>, <%= o.state %></small></td>
+        <td><%= o.item_count %></td>
+        <td><strong><%= money(o.total) %></strong></td>
+        <td><%= o.payment_method === 'cod' ? 'COD' : 'Online' %><br><span class="pill pill-<%= o.payment_status %>"><%= o.payment_status %></span></td>
+        <td><span class="pill pill-<%= o.status %>"><%= o.status %></span></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table></div></div>
+<%- include('../../partials/pagination') %>
+<% } %>
+<%- include('../partials/bottom') %>

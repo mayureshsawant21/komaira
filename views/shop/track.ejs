@@ -1,0 +1,14 @@
+<%- include('../partials/head') %>
+<section class="container narrow-top auth-wrap">
+  <div class="card auth-card">
+    <h1 class="page-title">Track your order</h1>
+    <p class="muted">Enter your order number (e.g. KB-1001) and the email used at checkout.</p>
+    <form action="/track-order" method="post">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="field"><span>Order number</span><input name="order_number" required value="<%= form.order_number || '' %>"></label>
+      <label class="field"><span>Email</span><input name="email" type="email" required value="<%= form.email || '' %>"></label>
+      <button class="btn btn-primary btn-block" type="submit">Find my order</button>
+    </form>
+  </div>
+</section>
+<%- include('../partials/foot') %>

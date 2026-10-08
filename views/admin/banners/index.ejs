@@ -1,0 +1,54 @@
+<%- include('../partials/top') %>
+<div class="page-head">
+  <div><h1>Banners & offers</h1><p class="muted">The homepage slider and the announcement bar at the very top of every page.</p></div>
+  <div class="actions"><a href="/admin/banners/new" class="btn btn-primary">+ New slide</a></div>
+</div>
+
+<section class="card">
+  <h2>Announcement bar</h2>
+  <form action="/admin/banners/announcement" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="check big"><input type="checkbox" name="announcement_active" <%= settings.announcement_active === '1' ? 'checked' : '' %>> Show announcement bar</label>
+    <label class="field mt"><span>Messages</span><textarea name="announcement_text" rows="3" placeholder="One message per line — they rotate automatically"><%= settings.announcement_text %></textarea><small>One message per line. Multiple lines rotate every few seconds.</small></label>
+    <div class="field-row">
+      <label class="field"><span>Link (optional)</span><input name="announcement_link" value="<%= settings.announcement_link %>" placeholder="/shop?sale=1"></label>
+      <label class="field"><span>Slider autoplay (seconds)</span><input type="number" name="banner_autoplay_seconds" min="0" max="30" value="<%= settings.banner_autoplay_seconds %>"><small>0 turns autoplay off</small></label>
+    </div>
+    <button class="btn btn-primary" type="submit">Save announcement</button>
+  </form>
+</section>
+
+<h2 class="section-h">Homepage slides</h2>
+<% if (!banners.length) { %>
+  <div class="card empty"><h2>No slides yet</h2><p>Create a slide to announce an offer, a new launch or a festive sale — with a button that links anywhere in your store.</p><a href="/admin/banners/new" class="btn btn-primary">+ New slide</a></div>
+<% } else { %>
+<div class="banner-list">
+  <% banners.forEach((b, i) => { %>
+    <article class="banner-item card">
+      <div class="banner-preview text-<%= b.text_theme %> align-<%= b.align %>" style="--slide-bg: <%= b.bg_color || '#f3e6e1' %>">
+        <% if (b.image) { %><img src="<%= b.image %>" alt=""><% } %>
+        <div class="banner-preview-text">
+          <% if (b.eyebrow) { %><small><%= b.eyebrow %></small><% } %>
+          <strong><%= b.title %></strong>
+          <% if (b.cta_text) { %><span class="mini-cta"><%= b.cta_text %></span><% } %>
+        </div>
+      </div>
+      <div class="banner-meta">
+        <div>
+          <span class="pill pill-<%= b.state.toLowerCase() %>"><%= b.state %></span>
+          <% if (b.starts_at || b.ends_at) { %><small class="muted"><%= b.starts_at ? `From ${b.starts_at.slice(0, 16)}` : '' %> <%= b.ends_at ? `until ${b.ends_at.slice(0, 16)}` : '' %></small><% } %>
+          <% if (b.cta_link) { %><small class="muted">→ <%= b.cta_link %></small><% } %>
+        </div>
+        <div class="row-actions">
+          <form action="/admin/banners/<%= b.id %>/move" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="dir" value="up"><button class="btn btn-xs" <%= i === 0 ? 'disabled' : '' %> aria-label="Move up">↑</button></form>
+          <form action="/admin/banners/<%= b.id %>/move" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="dir" value="down"><button class="btn btn-xs" <%= i === banners.length - 1 ? 'disabled' : '' %> aria-label="Move down">↓</button></form>
+          <form action="/admin/banners/<%= b.id %>/toggle" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-xs"><%= b.is_active ? 'Hide' : 'Show' %></button></form>
+          <a href="/admin/banners/<%= b.id %>/edit" class="btn btn-xs">Edit</a>
+          <form action="/admin/banners/<%= b.id %>/delete" method="post" data-confirm="Delete this slide?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-xs btn-danger-text">Delete</button></form>
+        </div>
+      </div>
+    </article>
+  <% }) %>
+</div>
+<% } %>
+<%- include('../partials/bottom') %>

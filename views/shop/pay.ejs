@@ -1,0 +1,19 @@
+<%- include('../partials/head') %>
+<section class="container narrow-top center-block">
+  <div class="card pay-card">
+    <%- include('../partials/icon', { name: 'lock', size: 32 }) %>
+    <h1 class="page-title">Complete your payment</h1>
+    <p>Order <strong><%= order.order_number %></strong> · <%= money(order.total) %></p>
+    <button type="button" class="btn btn-primary btn-lg" id="rzp-pay">Pay <%= money(order.total) %></button>
+    <p class="muted small">You'll be taken to Razorpay's secure checkout. Prefer to pay later? Contact us with your order number.</p>
+    <form id="rzp-verify" action="/checkout/pay/<%= encodeURIComponent(order.order_number) %>/verify" method="post" hidden>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="t" value="<%= order.access_token %>">
+      <input type="hidden" name="razorpay_payment_id">
+      <input type="hidden" name="razorpay_order_id">
+      <input type="hidden" name="razorpay_signature">
+    </form>
+    <script type="application/json" id="rzp-options"><%- JSON.stringify(razorpay).replace(/</g, '\\u003c') %></script>
+  </div>
+</section>
+<%- include('../partials/foot', { extraScripts: ['https://checkout.razorpay.com/v1/checkout.js', '/public/js/pay.js'] }) %>

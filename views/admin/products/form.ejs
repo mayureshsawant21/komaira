@@ -1,0 +1,149 @@
+<%- include('../partials/top') %>
+<% const p = product; const isNew = !p.id; %>
+<div class="page-head">
+  <div>
+    <a href="/admin/products" class="back">← Products</a>
+    <h1><%= isNew ? 'Add product' : p.name %></h1>
+    <% if (!isNew && typeof stats !== 'undefined') { %><p class="muted"><%= stats.views %> views from <%= stats.visitors %> visitors in the last 30 days</p><% } %>
+  </div>
+  <% if (!isNew) { %>
+  <div class="actions">
+    <a href="/product/<%= p.slug %>" target="_blank" rel="noopener" class="btn">View in store ↗</a>
+    <form action="/admin/products/<%= p.id %>/duplicate" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn" type="submit">Duplicate</button></form>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../partials/errors') %>
+
+<form action="<%= isNew ? '/admin/products' : `/admin/products/${p.id}` %>" method="post" enctype="multipart/form-data" class="form-layout" id="product-form">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-main">
+    <section class="card">
+      <h2>Basic details</h2>
+      <label class="field"><span>Product name *</span><input name="name" required maxlength="200" value="<%= p.name || '' %>" placeholder="e.g. Velvet Matte Lipstick" data-slug-source></label>
+      <div class="field-row">
+        <label class="field"><span>Brand</span><input name="brand" value="<%= p.brand || '' %>" placeholder="e.g. Komaira"></label>
+        <label class="field"><span>Size / quantity</span><input name="size" value="<%= p.size || '' %>" placeholder="e.g. 30 ml, 4.2 g"></label>
+      </div>
+      <label class="field"><span>Short description</span><textarea name="short_description" rows="2" maxlength="500" placeholder="One or two lines shown near the price"><%= p.short_description || '' %></textarea></label>
+      <label class="field"><span>Full description</span><textarea name="description" rows="7" placeholder="Benefits, texture, finish… Use a blank line for a new paragraph, '- ' for bullet points and **bold**."><%= p.description || '' %></textarea></label>
+      <div class="field-row">
+        <label class="field"><span>How to use</span><textarea name="how_to_use" rows="4"><%= p.how_to_use || '' %></textarea></label>
+        <label class="field"><span>Ingredients</span><textarea name="ingredients" rows="4"><%= p.ingredients || '' %></textarea></label>
+      </div>
+      <label class="field"><span>Suitable for (skin type / concern)</span><input name="skin_type" value="<%= p.skin_type || '' %>" placeholder="e.g. All skin types, dry skin, sensitive skin"></label>
+    </section>
+
+    <section class="card">
+      <h2>Images</h2>
+      <p class="hint">The first image is the main photo. Upload JPG, PNG or WebP up to 8 MB each — square or 4:5 portrait photos look best.</p>
+      <% if (p.images && p.images.length) { %>
+        <div class="image-grid">
+          <% p.images.forEach((img, i) => { %>
+            <div class="image-tile">
+              <img src="<%= img.path %>" alt="">
+              <input type="hidden" name="image_id" value="<%= img.id %>">
+              <label class="mini-field">Order <input type="number" name="image_order" value="<%= img.sort_order %>"></label>
+              <label class="mini-field">Alt text <input name="image_alt" value="<%= img.alt || '' %>"></label>
+              <label class="check"><input type="checkbox" name="remove_image" value="<%= img.id %>"> Remove</label>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+      <label class="dropzone">
+        <input type="file" name="images" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple data-preview="#new-previews">
+        <span><strong>Click to upload</strong> or drag photos here</span>
+      </label>
+      <div class="image-grid" id="new-previews"></div>
+    </section>
+
+    <section class="card">
+      <h2>Pricing</h2>
+      <div class="field-row three">
+        <label class="field"><span>Selling price (<%= settings.currency_symbol %>) *</span><input name="price" inputmode="decimal" required value="<%= h.fromPaise(p.price) %>" placeholder="599"></label>
+        <label class="field"><span>MRP / compare-at price</span><input name="compare_at_price" inputmode="decimal" value="<%= h.fromPaise(p.compare_at_price) %>" placeholder="799"><small>Shown crossed out to highlight a discount</small></label>
+        <label class="field"><span>SKU</span><input name="sku" value="<%= p.sku || '' %>" placeholder="KB-LIP-001"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Inventory & variants</h2>
+      <div class="field-row three">
+        <label class="field"><span>Stock quantity</span><input type="number" name="stock" min="0" value="<%= p.stock || 0 %>"><small>Used when the product has no shades/sizes</small></label>
+        <label class="field"><span>Low-stock alert at</span><input type="number" name="low_stock_threshold" min="0" value="<%= p.low_stock_threshold ?? 5 %>"></label>
+        <label class="field"><span>Variant type</span><input name="variant_label" value="<%= p.variant_label || '' %>" placeholder="Shade, Size, Fragrance…" list="variant-labels"></label>
+        <datalist id="variant-labels"><option>Shade</option><option>Size</option><option>Colour</option><option>Fragrance</option><option>Pack</option></datalist>
+      </div>
+      <p class="hint">Selling multiple shades or sizes? Add each one below with its own stock. Leave price blank to use the main price.</p>
+      <div class="variants" data-variants>
+        <div class="variant-row variant-head" aria-hidden="true"><span>Name</span><span>Swatch</span><span>Price</span><span>Stock</span><span>SKU</span><span></span></div>
+        <% (p.variants || []).forEach((v) => { %>
+          <div class="variant-row">
+            <input type="hidden" name="variant_id" value="<%= v.id || '' %>">
+            <input name="variant_name" value="<%= v.name %>" placeholder="e.g. Rose Nude" aria-label="Variant name">
+            <span class="swatch-input"><input type="hidden" name="variant_color" value="<%= v.color || '' %>"><input type="color" data-color value="<%= v.color || '#d8a7a0' %>" aria-label="Swatch colour"><label class="check"><input type="checkbox" data-no-swatch <%= v.color ? '' : 'checked' %>> none</label></span>
+            <input name="variant_price" inputmode="decimal" value="<%= h.fromPaise(v.price) %>" placeholder="Same" aria-label="Variant price">
+            <input type="number" name="variant_stock" min="0" value="<%= v.stock %>" aria-label="Variant stock">
+            <input name="variant_sku" value="<%= v.sku || '' %>" aria-label="Variant SKU">
+            <button type="button" class="icon-x" data-remove-variant aria-label="Remove variant">×</button>
+          </div>
+        <% }) %>
+      </div>
+      <template id="variant-template">
+        <div class="variant-row">
+          <input type="hidden" name="variant_id" value="">
+          <input name="variant_name" placeholder="e.g. Rose Nude" aria-label="Variant name">
+          <span class="swatch-input"><input type="hidden" name="variant_color" value="#d8a7a0"><input type="color" data-color value="#d8a7a0" aria-label="Swatch colour"><label class="check"><input type="checkbox" data-no-swatch> none</label></span>
+          <input name="variant_price" inputmode="decimal" placeholder="Same" aria-label="Variant price">
+          <input type="number" name="variant_stock" min="0" value="0" aria-label="Variant stock">
+          <input name="variant_sku" aria-label="Variant SKU">
+          <button type="button" class="icon-x" data-remove-variant aria-label="Remove variant">×</button>
+        </div>
+      </template>
+      <button type="button" class="btn" data-add-variant>+ Add shade / size</button>
+    </section>
+
+    <section class="card">
+      <h2>Search engine listing</h2>
+      <label class="field"><span>URL handle</span><div class="prefix-input"><span>/product/</span><input name="slug" value="<%= p.slug || '' %>" placeholder="auto-generated from name" data-slug-target></div></label>
+      <label class="field"><span>Page title</span><input name="meta_title" maxlength="120" value="<%= p.meta_title || '' %>" placeholder="Defaults to product name"></label>
+      <label class="field"><span>Meta description</span><textarea name="meta_description" rows="2" maxlength="300" placeholder="Defaults to short description"><%= p.meta_description || '' %></textarea></label>
+    </section>
+  </div>
+
+  <aside class="form-side">
+    <section class="card">
+      <h2>Status</h2>
+      <select name="status" class="full">
+        <option value="active" <%= p.status === 'active' ? 'selected' : '' %>>Active — visible in store</option>
+        <option value="draft" <%= p.status === 'draft' ? 'selected' : '' %>>Draft — hidden</option>
+      </select>
+      <label class="check big"><input type="checkbox" name="is_featured" <%= p.is_featured ? 'checked' : '' %>> Feature on homepage (Bestsellers)</label>
+    </section>
+    <section class="card">
+      <h2>Organisation</h2>
+      <label class="field"><span>Category</span>
+        <select name="category_id">
+          <option value="">— Uncategorised —</option>
+          <% categories.forEach((c) => { %><option value="<%= c.id %>" <%= String(p.category_id) === String(c.id) ? 'selected' : '' %>><%= c.label %></option><% }) %>
+        </select>
+      </label>
+      <a href="/admin/categories/new" class="small">+ Create a new category</a>
+      <label class="field mt"><span>Badge</span><input name="badge" maxlength="30" value="<%= p.badge || '' %>" placeholder="New, Bestseller, Vegan…"></label>
+      <label class="field"><span>Tags</span><input name="tags" value="<%= p.tags || '' %>" placeholder="matte, long-lasting, vegan"><small>Comma separated — helps search</small></label>
+    </section>
+    <div class="sticky-actions">
+      <button type="submit" class="btn btn-primary btn-block">Save product</button>
+      <% if (isNew) { %><button type="submit" name="after" value="new" class="btn btn-block">Save & add another</button><% } %>
+    </div>
+  </aside>
+</form>
+
+<% if (!isNew) { %>
+  <form action="/admin/products/<%= p.id %>/delete" method="post" class="danger-zone" data-confirm="Delete “<%= p.name %>” permanently? This cannot be undone.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-danger">Delete product</button>
+  </form>
+<% } %>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,18 @@
+<%- include('../partials/top') %>
+<% const p = page; const isNew = !p.id; %>
+<div class="page-head"><div><a href="/admin/pages" class="back">← Pages</a><h1><%= isNew ? 'New page' : p.title %></h1></div></div>
+<%- include('../partials/errors') %>
+<form action="<%= isNew ? '/admin/pages' : `/admin/pages/${p.id}` %>" method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label class="field"><span>Title *</span><input name="title" required value="<%= p.title || '' %>"></label>
+  <% if (isNew) { %><label class="field"><span>URL handle</span><div class="prefix-input"><span>/pages/</span><input name="slug" placeholder="auto-generated"></div></label><% } %>
+  <label class="field"><span>Content</span><textarea name="content" rows="16"><%= p.content || '' %></textarea>
+    <small>Leave a blank line between paragraphs. Start a line with “## ” for a heading, “- ” for a bullet point, and wrap words in **double stars** for bold.</small></label>
+  <label class="check big"><input type="checkbox" name="is_active" <%= p.is_active ? 'checked' : '' %>> Published</label>
+  <label class="check big"><input type="checkbox" name="show_in_footer" <%= p.show_in_footer ? 'checked' : '' %>> Link in footer</label>
+  <div class="mt"><button class="btn btn-primary" type="submit">Save page</button></div>
+</form>
+<% if (!isNew) { %>
+  <form action="/admin/pages/<%= p.id %>/delete" method="post" class="danger-zone" data-confirm="Delete this page?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger">Delete page</button></form>
+<% } %>
+<%- include('../partials/bottom') %>

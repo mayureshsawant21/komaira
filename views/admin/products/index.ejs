@@ -1,0 +1,70 @@
+<%- include('../partials/top') %>
+<div class="page-head">
+  <div><h1>Products</h1><p class="muted"><%= pager.total %> product<%= pager.total === 1 ? '' : 's' %></p></div>
+  <div class="actions"><a href="/admin/products/new" class="btn btn-primary">+ Add product</a></div>
+</div>
+
+<form class="filters" method="get">
+  <input type="search" name="q" placeholder="Search name, SKU or brand" value="<%= query.q || '' %>">
+  <select name="category">
+    <option value="">All categories</option>
+    <% categories.forEach((c) => { %><option value="<%= c.id %>" <%= String(query.category) === String(c.id) ? 'selected' : '' %>><%= c.label %></option><% }) %>
+  </select>
+  <select name="status">
+    <option value="">Any status</option>
+    <option value="active" <%= query.status === 'active' ? 'selected' : '' %>>Active</option>
+    <option value="draft" <%= query.status === 'draft' ? 'selected' : '' %>>Draft</option>
+  </select>
+  <select name="stock">
+    <option value="">Any stock</option>
+    <option value="low" <%= query.stock === 'low' ? 'selected' : '' %>>Low stock</option>
+    <option value="out" <%= query.stock === 'out' ? 'selected' : '' %>>Out of stock</option>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <% if (Object.keys(query).length) { %><a href="/admin/products" class="muted">Clear</a><% } %>
+</form>
+
+<% if (!products.length) { %>
+  <div class="card empty">
+    <h2>No products yet</h2>
+    <p>Start by creating a category, then add your first product with photos, price and stock.</p>
+    <a href="/admin/products/new" class="btn btn-primary">+ Add product</a>
+  </div>
+<% } else { %>
+<div class="card flush">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Views (30d)</th><th>Sold</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% products.forEach((p) => { %>
+        <tr>
+          <td class="thumb-cell"><% if (p.image) { %><img src="<%= p.image %>" alt=""><% } else { %><span class="thumb-ph"><%= p.name.charAt(0) %></span><% } %></td>
+          <td><a href="/admin/products/<%= p.id %>/edit"><strong><%= p.name %></strong></a><br><small class="muted"><%= [p.brand, p.sku].filter(Boolean).join(' · ') %></small></td>
+          <td><%= p.category_name || '—' %></td>
+          <td><%= money(p.price) %><% if (p.compare_at_price) { %><br><s class="muted small"><%= money(p.compare_at_price) %></s><% } %></td>
+          <td>
+            <% if (p.variant_count > 0) { %>
+              <span class="<%= p.available <= 0 ? 'text-danger' : p.available <= p.low_stock_threshold ? 'text-warn' : '' %>"><%= p.available %></span><br><small class="muted"><%= p.variant_count %> <%= (p.variant_label || 'variant').toLowerCase() %>s</small>
+            <% } else { %>
+              <form action="/admin/products/<%= p.id %>/stock" method="post" class="inline-stock">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="qs" value="<%= h.queryWith(query) %>">
+                <input type="number" name="stock" value="<%= p.stock %>" min="0" aria-label="Stock for <%= p.name %>" class="<%= p.stock <= 0 ? 'is-danger' : p.stock <= p.low_stock_threshold ? 'is-warn' : '' %>">
+                <button type="submit" class="btn btn-xs">Save</button>
+              </form>
+            <% } %>
+          </td>
+          <td><%= p.views_30d %></td>
+          <td><%= p.sold %></td>
+          <td><span class="pill pill-<%= p.status %>"><%= p.status %></span><% if (p.is_featured) { %> <span class="pill">Featured</span><% } %></td>
+          <td class="row-actions">
+            <a href="/product/<%= p.slug %>" target="_blank" rel="noopener" title="View in store">View</a>
+            <a href="/admin/products/<%= p.id %>/edit">Edit</a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table></div>
+</div>
+<%- include('../../partials/pagination') %>
+<% } %>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,190 @@
+<%- include('../partials/head') %>
+<%
+  const p = product;
+  const hasVariants = p.variants.length > 0;
+  const firstAvailable = p.variants.find((v) => v.stock > 0) || p.variants[0];
+  const startPrice = hasVariants && firstAvailable && firstAvailable.price != null ? firstAvailable.price : p.price;
+  const startStock = hasVariants ? (firstAvailable ? firstAvailable.stock : 0) : p.stock;
+  const off = h.discountPercent(startPrice, p.compare_at_price);
+  const jsonLd = {
+    '@context': 'https://schema.org', '@type': 'Product', name: p.name,
+    image: p.images.map((i) => baseUrl + i.path), description: p.short_description || h.truncate(p.description, 300),
+    sku: p.sku || undefined, brand: p.brand ? { '@type': 'Brand', name: p.brand } : undefined,
+    offers: { '@type': 'Offer', priceCurrency: settings.currency_code || 'INR', price: (startPrice / 100).toFixed(2),
+      availability: p.available > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock', url: baseUrl + '/product/' + p.slug },
+    aggregateRating: p.review_count ? { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.review_count } : undefined,
+  };
+%>
+<script type="application/ld+json"><%- JSON.stringify(jsonLd).replace(/</g, '\\u003c') %></script>
+
+<div class="container">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="/">Home</a><span>/</span>
+    <% if (p.category_slug) { %><a href="/category/<%= p.category_slug %>"><%= p.category_name %></a><span>/</span><% } %>
+    <span aria-current="page"><%= p.name %></span>
+  </nav>
+</div>
+
+<section class="container product-layout">
+  <div class="gallery" data-gallery>
+    <div class="gallery-main">
+      <% if (p.images.length) { %>
+        <img src="<%= p.images[0].path %>" alt="<%= p.images[0].alt || p.name %>" data-gallery-main>
+      <% } else { %>
+        <span class="img-placeholder"><span><%= p.name.charAt(0) %></span></span>
+      <% } %>
+      <% if (off) { %><span class="badge badge-sale gallery-badge" data-off-badge><%= off %>% off</span><% } %>
+    </div>
+    <% if (p.images.length > 1) { %>
+      <div class="gallery-thumbs">
+        <% p.images.forEach((img, i) => { %>
+          <button type="button" class="thumb<%= i === 0 ? ' is-active' : '' %>" data-src="<%= img.path %>" data-alt="<%= img.alt || p.name %>" aria-label="Show image <%= i + 1 %>">
+            <img src="<%= img.path %>" alt="" loading="lazy">
+          </button>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="product-detail">
+    <% if (p.brand) { %><span class="product-brand"><%= p.brand %></span><% } %>
+    <h1 class="product-title"><%= p.name %></h1>
+    <% if (p.review_count > 0) { %>
+      <a href="#reviews" class="rating-line">
+        <span class="stars" aria-hidden="true"><% for (let i = 1; i <= 5; i++) { %><span class="<%= i <= Math.round(p.rating) ? 'on' : '' %>"><%- include('../partials/icon', { name: 'star', size: 16 }) %></span><% } %></span>
+        <%= p.rating %> · <%= p.review_count %> review<%= p.review_count === 1 ? '' : 's' %>
+      </a>
+    <% } %>
+
+    <div class="price-block">
+      <span class="price price-lg" data-price><%= money(startPrice) %></span>
+      <s class="price-compare" data-compare <%= off ? '' : 'hidden' %>><%= p.compare_at_price ? money(p.compare_at_price) : '' %></s>
+      <span class="save-pill" data-save <%= off ? '' : 'hidden' %>>Save <%= off %>%</span>
+    </div>
+    <p class="tax-note">Inclusive of all taxes<%= p.size ? ` · ${p.size}` : '' %></p>
+
+    <% if (p.short_description) { %><p class="lead"><%= p.short_description %></p><% } %>
+
+    <form action="/cart/add" method="post" class="buy-box" data-add-to-cart data-product='<%- JSON.stringify({ price: p.price, compare: p.compare_at_price, currency: settings.currency_symbol }).replace(/'/g, '&#39;') %>'>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="product_id" value="<%= p.id %>">
+
+      <% if (hasVariants) { %>
+        <fieldset class="variant-picker">
+          <legend><%= p.variant_label || 'Option' %>: <strong data-variant-name><%= firstAvailable ? firstAvailable.name : '' %></strong></legend>
+          <div class="variant-options">
+            <% p.variants.forEach((v) => { %>
+              <label class="variant<%= v.color ? ' variant-swatch' : '' %><%= v.stock <= 0 ? ' is-out' : '' %>" title="<%= v.name %><%= v.stock <= 0 ? ' — sold out' : '' %>">
+                <input type="radio" name="variant_id" value="<%= v.id %>" <%= firstAvailable && firstAvailable.id === v.id ? 'checked' : '' %> <%= v.stock <= 0 ? 'disabled' : '' %>
+                  data-name="<%= v.name %>" data-price="<%= v.price != null ? v.price : p.price %>" data-stock="<%= v.stock %>">
+                <% if (v.color) { %>
+                  <span class="swatch" style="--swatch: <%= v.color %>"></span><span class="sr-only"><%= v.name %></span>
+                <% } else { %>
+                  <span class="variant-label"><%= v.name %></span>
+                <% } %>
+              </label>
+            <% }) %>
+          </div>
+        </fieldset>
+      <% } %>
+
+      <p class="stock-line" data-stock-line>
+        <% if (startStock <= 0) { %><span class="stock-out">Out of stock</span>
+        <% } else if (startStock <= p.low_stock_threshold) { %><span class="stock-low">Only <%= startStock %> left — order soon</span>
+        <% } else { %><span class="stock-in"><%- include('../partials/icon', { name: 'check', size: 16 }) %> In stock, ready to ship</span><% } %>
+      </p>
+
+      <div class="buy-row">
+        <div class="qty" data-qty>
+          <button type="button" aria-label="Decrease quantity" data-step="-1"><%- include('../partials/icon', { name: 'minus', size: 16 }) %></button>
+          <input type="number" name="qty" value="1" min="1" max="10" aria-label="Quantity">
+          <button type="button" aria-label="Increase quantity" data-step="1"><%- include('../partials/icon', { name: 'plus', size: 16 }) %></button>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg grow" data-add-btn <%= p.available <= 0 ? 'disabled' : '' %>><%= p.available <= 0 ? 'Sold out' : 'Add to bag' %></button>
+      </div>
+      <button type="submit" name="buy_now" value="1" class="btn btn-outline btn-block" data-buy-now <%= p.available <= 0 ? 'disabled' : '' %>>Buy it now</button>
+    </form>
+
+    <form action="/account/wishlist/toggle" method="post" class="wish-inline" data-wishlist>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="product_id" value="<%= p.id %>">
+      <input type="hidden" name="back" value="/product/<%= p.slug %>">
+      <button type="submit" class="link-btn<%= inWishlist ? ' is-saved' : '' %>"><%- include('../partials/icon', { name: 'heart', size: 18 }) %> <span data-wish-text><%= inWishlist ? 'Saved to wishlist' : 'Add to wishlist' %></span></button>
+    </form>
+
+    <ul class="mini-promises">
+      <li><%- include('../partials/icon', { name: 'truck', size: 18 }) %> <% if (Number(settings.free_shipping_threshold) > 0) { %>Free shipping over <%= money(settings.free_shipping_threshold) %><% } else { %>Fast delivery across India<% } %></li>
+      <li><%- include('../partials/icon', { name: 'shield', size: 18 }) %> 100% authentic</li>
+      <% if (settings.cod_enabled === '1') { %><li><%- include('../partials/icon', { name: 'package', size: 18 }) %> Cash on Delivery available</li><% } %>
+    </ul>
+
+    <div class="accordion">
+      <% if (p.description) { %>
+        <details open><summary>Description <%- include('../partials/icon', { name: 'chevron-down', size: 18 }) %></summary><div class="prose"><%- h.formatText(p.description) %></div></details>
+      <% } %>
+      <% if (p.skin_type) { %>
+        <details><summary>Suitable for <%- include('../partials/icon', { name: 'chevron-down', size: 18 }) %></summary><div class="prose"><p><%= p.skin_type %></p></div></details>
+      <% } %>
+      <% if (p.how_to_use) { %>
+        <details><summary>How to use <%- include('../partials/icon', { name: 'chevron-down', size: 18 }) %></summary><div class="prose"><%- h.formatText(p.how_to_use) %></div></details>
+      <% } %>
+      <% if (p.ingredients) { %>
+        <details><summary>Ingredients <%- include('../partials/icon', { name: 'chevron-down', size: 18 }) %></summary><div class="prose"><%- h.formatText(p.ingredients) %></div></details>
+      <% } %>
+      <details><summary>Shipping & returns <%- include('../partials/icon', { name: 'chevron-down', size: 18 }) %></summary>
+        <div class="prose"><p>Dispatched within 1–2 business days. Unopened products can be returned within 7 days. <a href="/pages/returns">Read our returns policy</a>.</p></div>
+      </details>
+    </div>
+    <% if (p.sku) { %><p class="sku">SKU: <%= p.sku %></p><% } %>
+  </div>
+</section>
+
+<section class="container section reviews" id="reviews">
+  <div class="reviews-head">
+    <div>
+      <h2 class="section-title">Reviews</h2>
+      <% if (p.review_count) { %>
+        <p class="rating-summary"><strong><%= p.rating %></strong> out of 5 · based on <%= p.review_count %> review<%= p.review_count === 1 ? '' : 's' %></p>
+      <% } else { %><p class="muted">No reviews yet — be the first to share your thoughts.</p><% } %>
+    </div>
+    <button type="button" class="btn btn-outline" data-toggle="#review-form">Write a review</button>
+  </div>
+
+  <form id="review-form" class="review-form card" action="/product/<%= p.slug %>/review" method="post" hidden>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <fieldset class="star-input">
+      <legend>Your rating</legend>
+      <% for (let i = 5; i >= 1; i--) { %>
+        <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" <%= i === 5 ? 'required' : '' %>><label for="star<%= i %>" aria-label="<%= i %> star<%= i > 1 ? 's' : '' %>"><%- include('../partials/icon', { name: 'star', size: 26 }) %></label>
+      <% } %>
+    </fieldset>
+    <div class="form-grid">
+      <label class="field"><span>Name</span><input name="name" required maxlength="80" value="<%= customer ? customer.name : '' %>"></label>
+      <label class="field"><span>Title <em>(optional)</em></span><input name="title" maxlength="120"></label>
+    </div>
+    <label class="field"><span>Your review</span><textarea name="body" rows="4" required maxlength="2000"></textarea></label>
+    <button class="btn btn-primary" type="submit">Submit review</button>
+  </form>
+
+  <div class="review-list">
+    <% reviews.forEach((r) => { %>
+      <article class="review">
+        <div class="stars" aria-label="<%= r.rating %> out of 5 stars"><% for (let i = 1; i <= 5; i++) { %><span class="<%= i <= r.rating ? 'on' : '' %>"><%- include('../partials/icon', { name: 'star', size: 15 }) %></span><% } %></div>
+        <% if (r.title) { %><h3><%= r.title %></h3><% } %>
+        <p><%= r.body %></p>
+        <footer><strong><%= r.name %></strong> · <%= h.formatDate(r.created_at) %><% if (r.customer_id) { %> · <span class="verified">Verified customer</span><% } %></footer>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<% if (related.length) { %>
+<section class="container section">
+  <h2 class="section-title">You may also like</h2>
+  <div class="product-grid">
+    <% related.forEach((product) => { %><%- include('../partials/product-card', { product }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<%- include('../partials/foot') %>

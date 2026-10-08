@@ -1,0 +1,14 @@
+<%- include('partials/top') %>
+<div class="page-head">
+  <div><h1>Newsletter subscribers</h1><p class="muted"><%= subscribers.length %> subscriber<%= subscribers.length === 1 ? '' : 's' %> from the footer sign-up form.</p></div>
+  <div class="actions"><a href="/admin/subscribers/export.csv" class="btn">Export CSV</a></div>
+</div>
+<% if (!subscribers.length) { %>
+  <div class="card empty"><p>No subscribers yet.</p></div>
+<% } else { %>
+<div class="card flush"><div class="table-wrap"><table class="table">
+  <thead><tr><th>Email</th><th>Subscribed</th><th></th></tr></thead>
+  <tbody><% subscribers.forEach((s) => { %><tr><td><%= s.email %></td><td><%= h.formatDate(s.created_at) %></td><td class="row-actions"><form action="/admin/subscribers/<%= s.id %>/delete" method="post" data-confirm="Remove <%= s.email %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="linklike danger">Remove</button></form></td></tr><% }) %></tbody>
+</table></div></div>
+<% } %>
+<%- include('partials/bottom') %>

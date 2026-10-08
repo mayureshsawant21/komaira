@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Invoice <%= order.order_number %></title>
+  <link rel="stylesheet" href="/public/css/admin.css">
+</head>
+<body class="invoice">
+  <div class="invoice-sheet">
+    <header class="invoice-head">
+      <div>
+        <div class="brand"><span><%= settings.store_name %></span></div>
+        <p class="muted"><%= settings.address %><br><%= settings.contact_email %> <%= settings.contact_phone ? '· ' + settings.contact_phone : '' %></p>
+      </div>
+      <div class="right">
+        <h1>Invoice</h1>
+        <p><strong><%= order.order_number %></strong><br><%= h.formatDate(order.created_at) %></p>
+      </div>
+    </header>
+    <div class="invoice-parties">
+      <div><h3>Ship to</h3><p><strong><%= order.name %></strong><br><%= order.address_line1 %><br><% if (order.address_line2) { %><%= order.address_line2 %><br><% } %><%= order.city %>, <%= order.state %> <%= order.pincode %><br><%= order.phone %></p></div>
+      <div><h3>Payment</h3><p><%= order.payment_method === 'cod' ? 'Cash on Delivery' : 'Paid online' %><br>Status: <%= order.payment_status %></p></div>
+    </div>
+    <table class="table">
+      <thead><tr><th>Item</th><th>SKU</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+      <tbody>
+        <% order.items.forEach((i) => { %>
+          <tr><td><%= i.name %><%= i.variant_name ? ` — ${i.variant_name}` : '' %></td><td><%= i.sku || '' %></td><td><%= i.quantity %></td><td><%= money(i.price) %></td><td><%= money(i.total) %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <dl class="totals invoice-totals">
+      <div><dt>Subtotal</dt><dd><%= money(order.subtotal) %></dd></div>
+      <% if (order.discount) { %><div><dt>Discount</dt><dd>−<%= money(order.discount) %></dd></div><% } %>
+      <div><dt>Shipping</dt><dd><%= order.shipping ? money(order.shipping) : 'Free' %></dd></div>
+      <div class="grand"><dt>Total</dt><dd><%= money(order.total) %></dd></div>
+    </dl>
+    <p class="muted small">Prices are inclusive of all taxes. Thank you for shopping with <%= settings.store_name %>!</p>
+    <button type="button" class="btn btn-primary no-print" data-print>Print</button>
+  </div>
+  <script src="/public/js/admin.js" defer></script>
+</body>
+</html>

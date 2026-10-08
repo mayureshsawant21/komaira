@@ -1,0 +1,47 @@
+<%- include('../partials/top') %>
+<% const c = category; const isNew = !c.id; %>
+<div class="page-head"><div><a href="/admin/categories" class="back">← Categories</a><h1><%= isNew ? 'New category' : c.name %></h1></div></div>
+<%- include('../partials/errors') %>
+<form action="<%= isNew ? '/admin/categories' : `/admin/categories/${c.id}` %>" method="post" enctype="multipart/form-data" class="form-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-main">
+    <section class="card">
+      <label class="field"><span>Category name *</span><input name="name" required maxlength="100" value="<%= c.name || '' %>" placeholder="e.g. Skincare" data-slug-source></label>
+      <label class="field"><span>Description</span><textarea name="description" rows="3" placeholder="Shown at the top of the category page"><%= c.description || '' %></textarea></label>
+      <label class="field"><span>Parent category</span>
+        <select name="parent_id">
+          <option value="">— None (top level) —</option>
+          <% parents.forEach((pc) => { %><option value="<%= pc.id %>" <%= String(c.parent_id) === String(pc.id) ? 'selected' : '' %>><%= '— '.repeat(pc.depth) + pc.name %></option><% }) %>
+        </select>
+        <small>Optional — e.g. put “Lipstick” inside “Makeup”.</small>
+      </label>
+      <label class="field"><span>URL handle</span><div class="prefix-input"><span>/category/</span><input name="slug" value="<%= c.slug || '' %>" placeholder="auto-generated" data-slug-target></div></label>
+    </section>
+    <section class="card">
+      <h2>Image</h2>
+      <p class="hint">Shown in the round “Shop by category” tiles on the homepage. A square photo works best.</p>
+      <% if (c.image) { %><div class="image-grid"><div class="image-tile"><img src="<%= c.image %>" alt=""><label class="check"><input type="checkbox" name="remove_image"> Remove</label></div></div><% } %>
+      <label class="dropzone"><input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/avif" data-preview="#cat-preview"><span><strong>Click to upload</strong> a category image</span></label>
+      <div class="image-grid" id="cat-preview"></div>
+    </section>
+  </div>
+  <aside class="form-side">
+    <section class="card">
+      <h2>Visibility</h2>
+      <label class="check big"><input type="checkbox" name="is_active" <%= c.is_active ? 'checked' : '' %>> Visible in store</label>
+      <label class="check big"><input type="checkbox" name="show_on_home" <%= c.show_on_home ? 'checked' : '' %>> Show on homepage</label>
+      <label class="field mt"><span>Sort order</span><input type="number" name="sort_order" value="<%= c.sort_order || 0 %>"><small>Lower numbers appear first in the menu</small></label>
+    </section>
+    <div class="sticky-actions">
+      <button type="submit" class="btn btn-primary btn-block">Save category</button>
+      <% if (isNew) { %><button type="submit" name="after" value="product" class="btn btn-block">Save & add a product</button><% } %>
+    </div>
+  </aside>
+</form>
+<% if (!isNew) { %>
+  <form action="/admin/categories/<%= c.id %>/delete" method="post" class="danger-zone" data-confirm="Delete the “<%= c.name %>” category? Its products will be kept but become uncategorised.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-danger">Delete category</button>
+  </form>
+<% } %>
+<%- include('../partials/bottom') %>

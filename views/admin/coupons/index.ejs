@@ -1,0 +1,27 @@
+<%- include('../partials/top') %>
+<div class="page-head">
+  <div><h1>Coupons</h1><p class="muted">Discount codes customers can enter in their bag or at checkout.</p></div>
+  <div class="actions"><a href="/admin/coupons/new" class="btn btn-primary">+ New coupon</a></div>
+</div>
+<% if (!coupons.length) { %>
+  <div class="card empty"><h2>No coupons yet</h2><p>Create codes like WELCOME10 (10% off) or FLAT100 (₹100 off orders above ₹999).</p><a href="/admin/coupons/new" class="btn btn-primary">+ New coupon</a></div>
+<% } else { %>
+<div class="card flush"><div class="table-wrap"><table class="table">
+  <thead><tr><th>Code</th><th>Discount</th><th>Min. order</th><th>Used</th><th>Valid</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    <% coupons.forEach((c) => { %>
+      <tr>
+        <td><strong class="code"><%= c.code %></strong><% if (c.description) { %><br><small class="muted"><%= c.description %></small><% } %></td>
+        <td><%= c.type === 'percent' ? `${c.value}% off` : `${money(c.value)} off` %></td>
+        <td><%= c.min_order ? money(c.min_order) : '—' %></td>
+        <td><%= c.used_count %><%= c.max_uses != null ? ` / ${c.max_uses}` : '' %></td>
+        <td><small><%= c.starts_at || 'Now' %> → <%= c.ends_at || 'No end' %></small></td>
+        <td><span class="pill pill-<%= c.is_active ? 'active' : 'draft' %>"><%= c.is_active ? 'Active' : 'Off' %></span></td>
+        <td class="row-actions"><a href="/admin/coupons/<%= c.id %>/edit">Edit</a>
+          <form action="/admin/coupons/<%= c.id %>/delete" method="post" data-confirm="Delete coupon <%= c.code %>?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="linklike danger">Delete</button></form></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table></div></div>
+<% } %>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,27 @@
+<%- include('../partials/head') %>
+<section class="container narrow-top contact-layout">
+  <div>
+    <h1 class="page-title">Contact us</h1>
+    <p class="page-intro">Questions about a product, your order or a recommendation? We'd love to help.</p>
+    <ul class="contact-list big">
+      <% if (settings.contact_email) { %><li><%- include('../partials/icon', { name: 'mail' }) %><a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email %></a></li><% } %>
+      <% if (settings.contact_phone) { %><li><%- include('../partials/icon', { name: 'phone' }) %><a href="tel:<%= settings.contact_phone.replace(/\s/g, '') %>"><%= settings.contact_phone %></a></li><% } %>
+      <% if (settings.whatsapp) { %><li><%- include('../partials/icon', { name: 'whatsapp' }) %><a href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener">Chat on WhatsApp</a></li><% } %>
+      <% if (settings.address) { %><li><%- include('../partials/icon', { name: 'pin' }) %><span><%= settings.address %></span></li><% } %>
+    </ul>
+  </div>
+  <form action="/contact" method="post" class="card">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
+      <label class="field"><span>Name</span><input name="name" required value="<%= form.name || '' %>"></label>
+      <label class="field"><span>Email</span><input name="email" type="email" required value="<%= form.email || '' %>"></label>
+    </div>
+    <div class="form-grid">
+      <label class="field"><span>Phone <em>(optional)</em></span><input name="phone" type="tel" value="<%= form.phone || '' %>"></label>
+      <label class="field"><span>Subject <em>(optional)</em></span><input name="subject" value="<%= form.subject || '' %>"></label>
+    </div>
+    <label class="field"><span>Message</span><textarea name="body" rows="5" required><%= form.body || '' %></textarea></label>
+    <button class="btn btn-primary" type="submit">Send message</button>
+  </form>
+</section>
+<%- include('../partials/foot') %>

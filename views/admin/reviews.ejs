@@ -1,0 +1,27 @@
+<%- include('partials/top') %>
+<div class="page-head"><div><h1>Reviews</h1><p class="muted">New reviews wait here for your approval before appearing in the store.</p></div></div>
+<div class="tabs">
+  <% ['pending', 'approved', 'rejected'].forEach((s) => { %><a href="/admin/reviews?status=<%= s %>" class="<%= status === s ? 'is-active' : '' %>"><%= s.charAt(0).toUpperCase() + s.slice(1) %> <em><%= counts[s] || 0 %></em></a><% }) %>
+</div>
+<% if (!reviews.length) { %>
+  <div class="card empty"><p>No <%= status %> reviews.</p></div>
+<% } else { %>
+<div class="review-admin-list">
+  <% reviews.forEach((r) => { %>
+    <article class="card review-admin">
+      <div>
+        <div class="stars-text" aria-label="<%= r.rating %> out of 5"><%= '★'.repeat(r.rating) %><span><%= '★'.repeat(5 - r.rating) %></span></div>
+        <% if (r.title) { %><strong><%= r.title %></strong><% } %>
+        <p><%= r.body %></p>
+        <small class="muted"><%= r.name %> · <%= h.formatDate(r.created_at, true) %> · on <a href="/product/<%= r.product_slug %>" target="_blank" rel="noopener"><%= r.product_name %></a></small>
+      </div>
+      <div class="row-actions">
+        <% if (status !== 'approved') { %><form action="/admin/reviews/<%= r.id %>/approve" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="from" value="<%= status %>"><button class="btn btn-xs btn-primary">Approve</button></form><% } %>
+        <% if (status !== 'rejected') { %><form action="/admin/reviews/<%= r.id %>/reject" method="post"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="from" value="<%= status %>"><button class="btn btn-xs">Reject</button></form><% } %>
+        <form action="/admin/reviews/<%= r.id %>/delete" method="post" data-confirm="Delete this review permanently?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="from" value="<%= status %>"><button class="btn btn-xs btn-danger-text">Delete</button></form>
+      </div>
+    </article>
+  <% }) %>
+</div>
+<% } %>
+<%- include('partials/bottom') %>

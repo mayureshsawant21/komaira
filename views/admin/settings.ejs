@@ -1,0 +1,91 @@
+<%- include('partials/top') %>
+<% const s = settings; %>
+<div class="page-head"><div><h1>Settings</h1><p class="muted">Store details, shipping, payments and team access.</p></div></div>
+
+<form action="/admin/settings" method="post" class="form-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-main">
+    <section class="card">
+      <h2>Store details</h2>
+      <div class="field-row">
+        <label class="field"><span>Store name</span><input name="store_name" value="<%= s.store_name %>"></label>
+        <label class="field"><span>Tagline</span><input name="tagline" value="<%= s.tagline %>"></label>
+      </div>
+      <label class="field"><span>Search engine description</span><textarea name="meta_description" rows="2"><%= s.meta_description %></textarea><small>Shown by Google under your store name.</small></label>
+    </section>
+    <section class="card">
+      <h2>Contact & social</h2>
+      <div class="field-row">
+        <label class="field"><span>Contact email</span><input name="contact_email" type="email" value="<%= s.contact_email %>"></label>
+        <label class="field"><span>Phone</span><input name="contact_phone" value="<%= s.contact_phone %>"></label>
+      </div>
+      <div class="field-row">
+        <label class="field"><span>WhatsApp number</span><input name="whatsapp" value="<%= s.whatsapp %>" placeholder="91XXXXXXXXXX"></label>
+        <label class="field"><span>New order alerts to</span><input name="order_notify_email" type="email" value="<%= s.order_notify_email %>" placeholder="Defaults to contact email"></label>
+      </div>
+      <label class="field"><span>Address</span><input name="address" value="<%= s.address %>"></label>
+      <div class="field-row three">
+        <label class="field"><span>Instagram URL</span><input name="instagram" value="<%= s.instagram %>" placeholder="https://instagram.com/…"></label>
+        <label class="field"><span>Facebook URL</span><input name="facebook" value="<%= s.facebook %>"></label>
+        <label class="field"><span>YouTube URL</span><input name="youtube" value="<%= s.youtube %>"></label>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Homepage</h2>
+      <div class="field-row">
+        <label class="field"><span>Featured section title</span><input name="home_featured_title" value="<%= s.home_featured_title %>"></label>
+        <label class="field"><span>New arrivals title</span><input name="home_new_title" value="<%= s.home_new_title %>"></label>
+      </div>
+      <p class="hint">The four promises shown under the banner:</p>
+      <div class="field-row">
+        <% [1, 2, 3, 4].forEach((n) => { %><label class="field"><span>Promise <%= n %></span><input name="promise_<%= n %>" value="<%= s['promise_' + n] %>"></label><% }) %>
+      </div>
+    </section>
+  </div>
+  <aside class="form-side">
+    <section class="card">
+      <h2>Shipping</h2>
+      <label class="field"><span>Shipping fee (<%= s.currency_symbol %>)</span><input name="shipping_fee" inputmode="decimal" value="<%= h.fromPaise(s.shipping_fee) %>"></label>
+      <label class="field"><span>Free shipping above (<%= s.currency_symbol %>)</span><input name="free_shipping_threshold" inputmode="decimal" value="<%= h.fromPaise(s.free_shipping_threshold) %>"><small>0 = never free</small></label>
+    </section>
+    <section class="card">
+      <h2>Payments</h2>
+      <label class="check big"><input type="checkbox" name="cod_enabled" <%= s.cod_enabled === '1' ? 'checked' : '' %>> Allow Cash on Delivery</label>
+      <label class="field mt"><span>COD fee (<%= s.currency_symbol %>)</span><input name="cod_fee" inputmode="decimal" value="<%= h.fromPaise(s.cod_fee) %>"></label>
+      <p class="status-line <%= razorpayEnabled ? 'ok' : '' %>">Online payments (Razorpay): <strong><%= razorpayEnabled ? 'Connected' : 'Not set up' %></strong></p>
+      <% if (!razorpayEnabled) { %><p class="hint">Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to the server's .env file to accept UPI, cards and net banking.</p><% } %>
+      <p class="status-line <%= smtpEnabled ? 'ok' : '' %>">Order emails: <strong><%= smtpEnabled ? 'Sending' : 'Not set up' %></strong></p>
+      <label class="field mt"><span>Order number prefix</span><input name="order_prefix" value="<%= s.order_prefix %>" maxlength="6"></label>
+    </section>
+    <div class="sticky-actions"><button class="btn btn-primary btn-block" type="submit">Save settings</button></div>
+  </aside>
+</form>
+
+<div class="grid-2 mt-lg">
+  <form class="card" id="security" action="/admin/settings/password" method="post">
+    <h2>Change your password</h2>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="field"><span>Current password</span><input type="password" name="current_password" required autocomplete="current-password"></label>
+    <label class="field"><span>New password</span><input type="password" name="new_password" required minlength="10" autocomplete="new-password"><small>At least 10 characters</small></label>
+    <button class="btn" type="submit">Update password</button>
+  </form>
+  <section class="card" id="team">
+    <h2>Admin team</h2>
+    <ul class="plain team-list">
+      <% admins.forEach((a) => { %>
+        <li><span><strong><%= a.name %></strong><br><small class="muted"><%= a.email %></small></span>
+          <% if (a.id !== admin.id) { %><form action="/admin/settings/admins/<%= a.id %>/delete" method="post" data-confirm="Remove <%= a.name %>'s admin access?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="linklike danger">Remove</button></form><% } else { %><small class="muted">You</small><% } %></li>
+      <% }) %>
+    </ul>
+    <form action="/admin/settings/admins" method="post" class="mt">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="field-row">
+        <label class="field"><span>Name</span><input name="name" required></label>
+        <label class="field"><span>Email</span><input name="email" type="email" required></label>
+      </div>
+      <label class="field"><span>Temporary password</span><input name="password" type="password" required minlength="10" autocomplete="new-password"></label>
+      <button class="btn" type="submit">+ Add admin</button>
+    </form>
+  </section>
+</div>
+<%- include('partials/bottom') %>

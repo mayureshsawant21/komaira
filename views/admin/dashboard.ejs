@@ -1,0 +1,86 @@
+<%- include('partials/top') %>
+<div class="page-head">
+  <div>
+    <h1>Hello, <%= admin.name.split(' ')[0] %></h1>
+    <p class="muted">Here's how <%= settings.store_name %> is doing.</p>
+  </div>
+  <div class="actions">
+    <a href="/admin/products/new" class="btn btn-primary">+ Add product</a>
+    <a href="/admin/banners/new" class="btn">+ New banner</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="stat-label">Live now</span><strong class="stat-value"><span class="live-dot" aria-hidden="true"></span><%= live %></strong><span class="stat-sub">visitors in the last 5 min</span></div>
+  <div class="stat"><span class="stat-label">Visitors today</span><strong class="stat-value"><%= visitorsToday.n %></strong><span class="stat-sub"><%= visitorsToday.views %> page views</span></div>
+  <div class="stat"><span class="stat-label">Sales today</span><strong class="stat-value"><%= money(today.revenue) %></strong><span class="stat-sub"><%= today.orders %> order<%= today.orders === 1 ? '' : 's' %></span></div>
+  <div class="stat"><span class="stat-label">Sales · 30 days</span><strong class="stat-value"><%= money(month.revenue) %></strong><span class="stat-sub"><%= month.orders %> orders · avg <%= money(month.orders ? Math.round(month.revenue / month.orders) : 0) %></span></div>
+  <div class="stat"><span class="stat-label">Visitors · 30 days</span><strong class="stat-value"><%= traffic.totals.visitors %></strong><span class="stat-sub"><%= conversion.toFixed(1) %>% became customers</span></div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Visitors per day</h2><a href="/admin/analytics">Full report →</a></div>
+    <div class="chart-box"><canvas id="chart-visitors" role="img" aria-label="Bar chart of unique visitors per day for the last 30 days"></canvas></div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Sales per day</h2><a href="/admin/orders">All orders →</a></div>
+    <div class="chart-box"><canvas id="chart-sales" role="img" aria-label="Bar chart of sales per day for the last 30 days"></canvas></div>
+  </section>
+</div>
+<script type="application/json" id="dashboard-data"><%- JSON.stringify({ currency: settings.currency_symbol, days: daily.map((d) => ({ day: d.day, visitors: d.visitors, views: d.views, revenue: d.revenue, orders: d.orders })) }).replace(/</g, '\\u003c') %></script>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Recent orders</h2><a href="/admin/orders">View all →</a></div>
+    <% if (!recentOrders.length) { %><p class="muted">No orders yet. Once customers check out, they'll appear here.</p><% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>
+        <% recentOrders.forEach((o) => { %>
+          <tr>
+            <td><a href="/admin/orders/<%= o.id %>"><strong><%= o.order_number %></strong></a><br><small class="muted"><%= h.formatDate(o.created_at, true) %></small></td>
+            <td><%= o.name %></td>
+            <td><%= money(o.total) %><br><small class="muted"><%= o.payment_method === 'cod' ? 'COD' : 'Online' %> · <%= o.payment_status %></small></td>
+            <td><span class="pill pill-<%= o.status %>"><%= o.status %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+    <% } %>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Most visited pages · 30 days</h2></div>
+      <% if (!traffic.pages.length) { %><p class="muted">No visits recorded yet.</p><% } else { %>
+      <ol class="rank-list">
+        <% traffic.pages.slice(0, 6).forEach((p) => { %>
+          <li><a href="<%= p.path %>" target="_blank" rel="noopener"><%= p.title || p.path %></a><span><%= p.visitors %> visitor<%= p.visitors === 1 ? "" : "s" %></span></li>
+        <% }) %>
+      </ol>
+      <% } %>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Low stock</h2><a href="/admin/products?stock=low">Manage →</a></div>
+      <% if (!lowStock.length) { %><p class="muted">All products are well stocked.</p><% } else { %>
+      <ol class="rank-list">
+        <% lowStock.forEach((p) => { %>
+          <li><a href="/admin/products/<%= p.id %>/edit"><%= p.name %></a><span class="<%= p.available <= 0 ? 'text-danger' : 'text-warn' %>"><%= p.available <= 0 ? 'Out of stock' : `${p.available} left` %></span></li>
+        <% }) %>
+      </ol>
+      <% } %>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Top sellers · 30 days</h2></div>
+      <% if (!topProducts.length) { %><p class="muted">No sales yet.</p><% } else { %>
+      <ol class="rank-list">
+        <% topProducts.forEach((p) => { %><li><span><%= p.name %></span><span><%= p.qty %> sold · <%= money(p.revenue) %></span></li><% }) %>
+      </ol>
+      <% } %>
+    </section>
+  </div>
+</div>
+
+<p class="muted small">Store totals: <%= counts.products %> products · <%= counts.customers %> registered customers · <%= counts.subscribers %> newsletter subscribers</p>
+<%- include('partials/bottom', { charts: true }) %>

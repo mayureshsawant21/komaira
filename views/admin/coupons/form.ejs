@@ -1,0 +1,24 @@
+<%- include('../partials/top') %>
+<% const c = coupon; const isNew = !c.id; %>
+<div class="page-head"><div><a href="/admin/coupons" class="back">← Coupons</a><h1><%= isNew ? 'New coupon' : c.code %></h1></div></div>
+<%- include('../partials/errors') %>
+<form action="<%= isNew ? '/admin/coupons' : `/admin/coupons/${c.id}` %>" method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="field-row">
+    <label class="field"><span>Code *</span><input name="code" required maxlength="30" value="<%= c.code || '' %>" placeholder="WELCOME10" class="code-input"></label>
+    <label class="field"><span>Internal description</span><input name="description" value="<%= c.description || '' %>" placeholder="First order offer"></label>
+  </div>
+  <div class="field-row three">
+    <label class="field"><span>Type</span><select name="type"><option value="percent" <%= c.type === 'percent' ? 'selected' : '' %>>Percentage off</option><option value="fixed" <%= c.type === 'fixed' ? 'selected' : '' %>>Fixed amount off</option></select></label>
+    <label class="field"><span>Value *</span><input name="value" inputmode="decimal" required value="<%= c.value ? (c.type === 'fixed' ? h.fromPaise(c.value) : c.value) : '' %>" placeholder="10"><small>% or <%= settings.currency_symbol %> depending on type</small></label>
+    <label class="field"><span>Minimum order (<%= settings.currency_symbol %>)</span><input name="min_order" inputmode="decimal" value="<%= c.min_order ? h.fromPaise(c.min_order) : '' %>" placeholder="0"></label>
+  </div>
+  <div class="field-row three">
+    <label class="field"><span>Usage limit</span><input type="number" name="max_uses" min="0" value="<%= c.max_uses ?? '' %>" placeholder="Unlimited"></label>
+    <label class="field"><span>Starts</span><input type="date" name="starts_at" value="<%= c.starts_at || '' %>"></label>
+    <label class="field"><span>Ends</span><input type="date" name="ends_at" value="<%= c.ends_at || '' %>"></label>
+  </div>
+  <label class="check big"><input type="checkbox" name="is_active" <%= c.is_active ? 'checked' : '' %>> Active</label>
+  <button type="submit" class="btn btn-primary mt">Save coupon</button>
+</form>
+<%- include('../partials/bottom') %>

@@ -1,0 +1,50 @@
+<%
+  const p = product;
+  const fromPrice = p.variant_count > 0 && p.min_variant_price != null ? p.min_variant_price : p.price;
+  const off = h.discountPercent(p.price, p.compare_at_price);
+  const soldOut = p.available <= 0;
+%>
+<article class="product-card<%= soldOut ? ' is-sold-out' : '' %>">
+  <a href="/product/<%= p.slug %>" class="product-media" tabindex="-1" aria-hidden="true">
+    <% if (p.image) { %>
+      <img src="<%= p.image %>" alt="" loading="lazy" class="img-main">
+      <% if (p.image2) { %><img src="<%= p.image2 %>" alt="" loading="lazy" class="img-alt"><% } %>
+    <% } else { %>
+      <span class="img-placeholder"><span><%= p.name.charAt(0) %></span></span>
+    <% } %>
+    <span class="card-badges">
+      <% if (soldOut) { %><span class="badge badge-dark">Sold out</span>
+      <% } else if (p.badge) { %><span class="badge"><%= p.badge %></span><% } %>
+      <% if (off && !soldOut) { %><span class="badge badge-sale"><%= off %>% off</span><% } %>
+    </span>
+  </a>
+  <form action="/account/wishlist/toggle" method="post" class="wish-form" data-wishlist>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="product_id" value="<%= p.id %>">
+    <input type="hidden" name="back" value="<%= currentPath %>">
+    <button type="submit" class="wish-btn" aria-label="Save <%= p.name %> to wishlist"><%- include('icon', { name: 'heart', size: 18 }) %></button>
+  </form>
+  <div class="product-info">
+    <% if (p.brand) { %><span class="product-brand"><%= p.brand %></span><% } %>
+    <h3 class="product-name"><a href="/product/<%= p.slug %>"><%= p.name %></a></h3>
+    <% if (p.review_count > 0) { %>
+      <span class="rating-mini" aria-label="Rated <%= p.rating %> out of 5"><%- include('icon', { name: 'star', size: 13 }) %> <%= p.rating %> <span>(<%= p.review_count %>)</span></span>
+    <% } %>
+    <div class="price-row">
+      <span class="price"><%= p.variant_count > 0 && fromPrice !== p.price ? 'From ' : '' %><%= money(fromPrice) %></span>
+      <% if (off) { %><s class="price-compare"><%= money(p.compare_at_price) %></s><% } %>
+    </div>
+  </div>
+  <% if (!soldOut) { %>
+    <% if (p.variant_count > 0) { %>
+      <a href="/product/<%= p.slug %>" class="btn btn-outline btn-block btn-sm card-cta">Choose <%= (p.variant_label || 'option').toLowerCase() %></a>
+    <% } else { %>
+      <form action="/cart/add" method="post" data-add-to-cart class="card-cta">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="product_id" value="<%= p.id %>">
+        <input type="hidden" name="qty" value="1">
+        <button type="submit" class="btn btn-outline btn-block btn-sm">Add to bag</button>
+      </form>
+    <% } %>
+  <% } %>
+</article>

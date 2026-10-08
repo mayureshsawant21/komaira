@@ -1,0 +1,16 @@
+<% if (cart.coupon) { %>
+  <form action="/cart/coupon/remove" method="post" class="coupon-applied">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="back" value="<%= back %>">
+    <span><%- include('icon', { name: 'check', size: 16 }) %> <strong><%= cart.coupon.code %></strong> applied</span>
+    <button type="submit" class="link-btn">Remove</button>
+  </form>
+<% } else { %>
+  <form action="/cart/coupon" method="post" class="coupon-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="back" value="<%= back %>">
+    <label class="sr-only" for="coupon-<%= back %>">Coupon code</label>
+    <input id="coupon-<%= back %>" name="code" placeholder="Coupon code" autocomplete="off">
+    <button class="btn btn-outline btn-sm" type="submit">Apply</button>
+  </form>
+<% } %>

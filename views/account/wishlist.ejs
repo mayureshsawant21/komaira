@@ -1,0 +1,17 @@
+<%- include('../partials/head') %>
+<section class="container narrow-top">
+  <h1 class="page-title">Your wishlist</h1>
+  <% if (!products.length) { %>
+    <div class="empty-state">
+      <%- include('../partials/icon', { name: 'heart', size: 40 }) %>
+      <h2>Nothing saved yet</h2>
+      <p>Tap the heart on any product to save it here.</p>
+      <a href="/shop" class="btn btn-primary">Discover products</a>
+    </div>
+  <% } else { %>
+    <div class="product-grid">
+      <% products.forEach((product) => { %><%- include('../partials/product-card', { product }) %><% }) %>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/foot') %>

@@ -1,0 +1,65 @@
+</main>
+
+<footer class="site-footer">
+  <section class="newsletter" id="newsletter">
+    <div class="container newsletter-inner">
+      <div>
+        <h2>Join the Komaira circle</h2>
+        <p>New launches, beauty edits and members-only offers — straight to your inbox.</p>
+      </div>
+      <form action="/newsletter" method="post" class="newsletter-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="sr-only" for="nl-email">Email address</label>
+        <input id="nl-email" type="email" name="email" placeholder="Your email address" required>
+        <button class="btn btn-primary" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="/" class="logo logo-footer"><span class="logo-mark">Komaira</span><span class="logo-sub">Boutique</span></a>
+      <p><%= settings.tagline %></p>
+      <div class="socials">
+        <% if (settings.instagram) { %><a href="<%= settings.instagram %>" target="_blank" rel="noopener" aria-label="Instagram"><%- include('icon', { name: 'instagram' }) %></a><% } %>
+        <% if (settings.facebook) { %><a href="<%= settings.facebook %>" target="_blank" rel="noopener" aria-label="Facebook"><%- include('icon', { name: 'facebook' }) %></a><% } %>
+        <% if (settings.youtube) { %><a href="<%= settings.youtube %>" target="_blank" rel="noopener" aria-label="YouTube"><%- include('icon', { name: 'youtube' }) %></a><% } %>
+        <% if (settings.whatsapp) { %><a href="https://wa.me/<%= String(settings.whatsapp).replace(/\D/g, '') %>" target="_blank" rel="noopener" aria-label="WhatsApp"><%- include('icon', { name: 'whatsapp' }) %></a><% } %>
+      </div>
+    </div>
+    <div>
+      <h3>Shop</h3>
+      <ul>
+        <li><a href="/shop">Shop all</a></li>
+        <% navCategories.slice(0, 6).forEach((c) => { %><li><a href="/category/<%= c.slug %>"><%= c.name %></a></li><% }) %>
+        <li><a href="/shop?sale=1">Offers</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Help</h3>
+      <ul>
+        <li><a href="/track-order">Track your order</a></li>
+        <li><a href="/contact">Contact us</a></li>
+        <% footerPages.forEach((p) => { %><li><a href="/pages/<%= p.slug %>"><%= p.title %></a></li><% }) %>
+      </ul>
+    </div>
+    <div>
+      <h3>Get in touch</h3>
+      <ul class="contact-list">
+        <% if (settings.contact_email) { %><li><%- include('icon', { name: 'mail', size: 16 }) %><a href="mailto:<%= settings.contact_email %>"><%= settings.contact_email %></a></li><% } %>
+        <% if (settings.contact_phone) { %><li><%- include('icon', { name: 'phone', size: 16 }) %><a href="tel:<%= settings.contact_phone.replace(/\s/g, '') %>"><%= settings.contact_phone %></a></li><% } %>
+        <% if (settings.address) { %><li><%- include('icon', { name: 'pin', size: 16 }) %><span><%= settings.address %></span></li><% } %>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© <%= new Date().getFullYear() %> <%= settings.store_name %>. All rights reserved.</span>
+    <span class="pay-note"><%- include('icon', { name: 'lock', size: 14 }) %> Secure payments · UPI · Cards · Cash on Delivery</span>
+  </div>
+</footer>
+
+<div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+<script src="/public/js/main.js" defer></script>
+<% if (typeof extraScripts !== 'undefined') { extraScripts.forEach((src) => { %><script src="<%= src %>" defer></script><% }) } %>
+</body>
+</html>

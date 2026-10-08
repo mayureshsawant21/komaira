@@ -1,0 +1,26 @@
+<%- include('../partials/top') %>
+<div class="page-head">
+  <div><h1>Categories</h1><p class="muted">Group your products so customers can browse easily. Categories can have sub-categories.</p></div>
+  <div class="actions"><a href="/admin/categories/new" class="btn btn-primary">+ New category</a></div>
+</div>
+<% if (!categories.length) { %>
+  <div class="card empty"><h2>No categories yet</h2><p>Create categories like Skincare, Makeup, Lips or Fragrance.</p><a href="/admin/categories/new" class="btn btn-primary">+ New category</a></div>
+<% } else { %>
+<div class="card flush"><div class="table-wrap"><table class="table">
+  <thead><tr><th></th><th>Name</th><th>Products</th><th>Views (30d)</th><th>Order</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    <% categories.forEach((c) => { %>
+      <tr>
+        <td class="thumb-cell"><% if (c.image) { %><img src="<%= c.image %>" alt=""><% } else { %><span class="thumb-ph"><%= c.name.charAt(0) %></span><% } %></td>
+        <td style="padding-left: <%= 12 + c.depth * 22 %>px"><% if (c.depth) { %><span class="muted">↳ </span><% } %><a href="/admin/categories/<%= c.id %>/edit"><strong><%= c.name %></strong></a><br><small class="muted">/category/<%= c.slug %></small></td>
+        <td><a href="/admin/products?category=<%= c.id %>"><%= c.product_count %></a></td>
+        <td><%= c.views_30d %></td>
+        <td><%= c.sort_order %></td>
+        <td><span class="pill pill-<%= c.is_active ? 'active' : 'draft' %>"><%= c.is_active ? 'Visible' : 'Hidden' %></span><% if (c.show_on_home && !c.parent_id) { %> <span class="pill">Homepage</span><% } %></td>
+        <td class="row-actions"><a href="/admin/products/new?category=<%= c.id %>">+ Product</a><a href="/admin/categories/<%= c.id %>/edit">Edit</a></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table></div></div>
+<% } %>
+<%- include('../partials/bottom') %>
